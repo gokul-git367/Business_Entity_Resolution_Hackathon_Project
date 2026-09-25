@@ -1,0 +1,1319 @@
+1. LANGUAGE / SCRIPT — the one you noticed
+
+This should absolutely be treated as a major dimension.
+
+A business could appear as:
+
+Source 1:
+Shree Ganesh Electronics
+Source 2:
+श्री गणेश इलेक्ट्रॉनिक्स
+Source 3:
+Shree ગણેશ Electronics
+
+So there are potentially:
+
+English / Latin
+Hindi / Devanagari
+Bengali
+Telugu
+Tamil
+Kannada
+Malayalam
+Gujarati
+Arabic
+French
+Mixed scripts
+Different problem types here
+Same language, different spelling
+Bengaluru
+Bangalore
+Same language, different script
+Kolkata
+কলকাতা
+Mixed language
+Sri Sai Medicals
+శ్రీ Sai Medicals
+Transliteration
+শুভ ট্রেডার্স
+Shubho Traders
+
+The official challenge confirms transliteration as a possible noise pattern, but it does not enumerate every script/language.
+
+So when we inspect the actual dataset, script detection should be one of our first analyses.
+
+2. LANGUAGE MIXING WITHIN ONE FIELD
+
+This is slightly different from simply having different scripts.
+
+A single name may be:
+
+Sri Lakshmi హోటల్
+
+or:
+
+ABC इलेक्ट्रॉनिक्स Pvt Ltd
+
+or:
+
+Shree कृष्णा Stores
+
+So:
+
+one record = multiple scripts
+
+This can break ordinary tokenization.
+
+For example, if you use:
+
+text.split()
+
+you may get tokens from multiple scripts that don't have obvious lexical relationships.
+
+3. LANGUAGE MIXING BETWEEN NAME AND ADDRESS
+
+It could also be:
+
+business_name:
+ABC Electronics
+
+but:
+
+business_address:
+12 MG Road, ಕನ್ನಡ block, Bengaluru
+
+Another source could have the address predominantly transliterated.
+
+So we cannot assume:
+
+name language = address language
+4. UNICODE / TEXT-ENCODING COMPLEXITY
+
+Even when the language is the same, visually identical text can have different Unicode representations.
+
+For example, accented characters:
+
+é
+
+versus:
+
+e + combining accent
+
+Or different Unicode punctuation:
+
+’
+'
+–
+-
+
+This can make raw string comparison misleading.
+
+So we should inspect:
+
+Unicode normalization
+accented characters
+special punctuation
+non-breaking spaces
+zero-width characters
+
+This is an inferred complexity to check, not explicitly confirmed by the challenge document.
+
+5. SPELLING / TYPO COMPLEXITY
+
+The official guidelines explicitly mention typos.
+
+But there are different types:
+
+Robotics
+Robtics
+Character deletion
+Technologies
+Technolgies
+Character insertion
+Technologies
+Technologiess
+Character substitution
+Limited
+Limlted
+Transposition
+Robotics
+Roboitcs
+
+These have different implications for the matcher.
+
+6. WORD ORDER COMPLEXITY
+
+Officially confirmed.
+
+Example:
+
+ABC Trading Company
+
+vs
+
+Trading Company ABC
+
+But we should investigate more complicated rearrangements:
+
+ABC India Trading Pvt Ltd
+
+vs
+
+India ABC Pvt Ltd Trading
+
+So whole-string similarity may become poor even though token overlap is extremely high.
+
+7. TOKEN SPLITTING / JOINING
+
+This is another complexity I would look for.
+
+For example:
+
+Source 1:
+ABC Enterprises
+
+Source 2:
+
+ABCEnterprises
+
+or:
+
+ABC Enterprise
+
+or:
+
+A B C Enterprises
+
+So:
+
+spaces inserted
+spaces removed
+hyphens inserted
+hyphens removed
+
+can affect matching.
+
+This is not explicitly called out in the PDF, so we'd verify it from the rows.
+
+8. ABBREVIATION COMPLEXITY
+
+Officially confirmed.
+
+But don't think only:
+
+Ltd → Limited
+Pvt → Private
+Corp → Corporation
+
+It could include:
+
+Rd → Road
+St → Street
+Ave → Avenue
+Blvd → Boulevard
+
+and potentially source-specific abbreviations.
+
+More importantly, abbreviations may be ambiguous.
+
+For example:
+
+St
+
+might mean:
+
+Street
+Saint
+
+depending on context.
+
+So blindly expanding abbreviations can actually create false matches.
+
+9. LEGAL ENTITY SUFFIX COMPLEXITY
+
+Officially confirmed.
+
+Examples:
+
+Pvt Ltd
+Private Limited
+Ltd
+LLC
+Inc
+Corp
+Corporation
+
+Potential complications:
+
+ABC Technologies Pvt Ltd
+ABC Technologies
+ABC Technologies India Pvt Ltd
+
+The legal part may be:
+
+present
+absent
+different
+reordered
+
+So we should separate:
+
+CORE BUSINESS NAME
+
+from:
+
+LEGAL SUFFIX
+
+rather than treating the complete name as one indivisible string.
+
+10. DBA / TRADE NAME COMPLEXITY
+
+Officially confirmed.
+
+Potential situation:
+
+Legal name:
+ABC Retail Private Limited
+
+Trade name:
+FreshMart
+
+So the names may have almost zero character similarity.
+
+Here, address becomes much more important.
+
+This is one of the reasons a pure name-matching model could fail.
+
+11. SYMBOL / PUNCTUATION COMPLEXITY
+
+Officially confirmed.
+
+Examples:
+
+A&B
+A and B
+A & B
+A-B
+A.B
+
+Also:
+
+#12
+No. 12
+12
+
+These may represent equivalent information.
+
+12. NUMERIC COMPLEXITY
+
+This is one I'd definitely investigate.
+
+Addresses contain numbers, and numbers are often extremely informative.
+
+But they can appear in different forms:
+
+12
+No 12
+#12
+12-A
+12/1
+12-14
+Flat 12
+Unit 12
+
+Potential problems:
+
+12 MG Road
+12A MG Road
+12/1 MG Road
+
+A naive string similarity model could misunderstand these differences.
+
+So we should separately analyze:
+
+numeric tokens
+building numbers
+flat/unit numbers
+postal/PIN codes
+floor numbers
+13. ADDRESS COMPONENT REORDERING
+
+Officially confirmed.
+
+Example:
+
+12 MG Road, Bengaluru, Karnataka
+
+versus:
+
+Karnataka, Bengaluru, 12 MG Road
+
+The characters are in different positions, but the components are essentially identical.
+
+Therefore:
+
+token/component matching
+
+is important.
+
+14. MISSING ADDRESS INFORMATION
+
+Officially confirmed.
+
+Example:
+
+Source 1:
+12 MG Road, Bengaluru, Karnataka, 560001
+
+Source 2:
+
+12 MG Road, Bengaluru
+
+Source 3:
+
+Bengaluru, MG Road
+
+The absence of information doesn't necessarily mean contradiction.
+
+This means:
+
+missing ≠ different
+
+This is extremely important for our feature design.
+
+15. PARTIAL ADDRESS
+
+Related but slightly different.
+
+You may have:
+
+Source 1:
+12 MG Road, Bengaluru, Karnataka, 560001
+
+Source 2:
+MG Road, Bengaluru
+
+Source 2 isn't necessarily wrong.
+
+It may simply be less complete.
+
+So address similarity should consider:
+
+overlap
+
+rather than requiring complete equality.
+
+16. LANDMARK-BASED ADDRESS
+
+Explicitly confirmed.
+
+Example:
+
+Near SBI ATM, MG Road
+
+instead of:
+
+12 MG Road, Bengaluru
+
+This is difficult because normal address parsing expects postal components.
+
+Landmark words can also be shared by many businesses, so:
+
+landmark match
+
+should not automatically mean:
+
+same business
+17. ADDRESS TRANSLITERATION
+
+Explicitly confirmed.
+
+For example:
+
+Source 1:
+স্থানীয় বাজার, কলকাতা
+
+versus a Latin-script representation.
+
+This makes address similarity a cross-script problem too, not just a name problem.
+
+18. COUNTRY COMPLEXITY
+
+The dataset officially has:
+
+TRAIN:
+US
+India
+
+TEST:
+US
+India
+France
+
+with France unseen during training.
+
+But there is another possibility we should investigate in the actual data:
+
+country label itself may have formatting variation
+
+For example:
+
+US
+USA
+United States
+
+The document does not say that these variations actually occur, so we should check rather than assume.
+
+19. COUNTRY ≠ LANGUAGE
+
+This is a very important modeling concept.
+
+Don't assume:
+
+India → English only
+France → French only
+
+Real records can be multilingual.
+
+So:
+
+country
+
+and:
+
+language/script
+
+must be treated as separate dimensions.
+
+20. SOURCE-SPECIFIC NOISE
+
+This is a very important competition hypothesis.
+
+Imagine we discover:
+
+Source 2:
+lots of abbreviations
+
+Source 3:
+lots of transliterations
+
+Then a single normalization strategy may not be optimal.
+
+We should investigate:
+
+What does S2 usually corrupt?
+What does S3 usually corrupt?
+
+The official challenge says the three sources are independent and have their own conventions.
+
+So source-specific transformation patterns are worth looking for.
+
+21. REGION-SPECIFIC NOISE
+
+The video specifically tells participants to pay attention to region-specific patterns in names and addresses.
+
+This could mean things like:
+
+different abbreviations
+different naming conventions
+different address structures
+different transliteration patterns
+
+So we should investigate:
+
+Country
+     +
+Name patterns
+     +
+Address patterns
+
+together.
+
+22. COMMON-NAME COLLISIONS
+
+This is a HUGE problem.
+
+Imagine:
+
+ABC Services
+
+appears 500 times.
+
+Then:
+
+ABC Services
+
+is weak evidence.
+
+But:
+
+Quantum Robotics International
+
+appearing only 2 times could be much more informative.
+
+So a name isn't just:
+
+similar / not similar
+
+We should ask:
+
+How rare is this name/token in the dataset?
+
+23. SHARED ADDRESS COLLISIONS
+
+The video explicitly describes this possibility. A candidate block can contain a different business that happens to share an address.
+
+For example:
+
+12 MG Road
+
+could contain:
+
+ABC Technologies
+Royal Consulting
+XYZ Legal Services
+
+Therefore:
+
+same address ≠ same entity
+
+This is a major false-positive source.
+
+24. SHARED NAME COLLISIONS
+
+Likewise:
+
+Royal Traders
+
+could be several businesses.
+
+So:
+
+same name ≠ same entity
+
+The best evidence is often a combination:
+
+name evidence
++
+address evidence
++
+context
+25. NAME AND ADDRESS CONTRADICTION
+
+This is one of the most important patterns to detect.
+
+Suppose:
+
+Name similarity = 0.98
+Address similarity = 0.05
+
+versus:
+
+Name similarity = 0.88
+Address similarity = 0.96
+
+These should not be treated equally.
+
+The model needs to understand agreement AND disagreement.
+
+26. ONE FIELD IS GOOD, ANOTHER IS BAD
+
+Possible examples:
+
+Name:
+excellent match
+
+Address:
+very noisy
+
+or:
+
+Name:
+completely different DBA
+
+Address:
+almost exact
+
+This is why we need separate features rather than one overall string similarity.
+
+27. MULTIPLE ADDRESSES / BRANCHES
+
+This one is not explicitly confirmed, but I would absolutely inspect for it.
+
+A business might have:
+
+Head office
+Branch A
+Branch B
+
+Then several records with the same business name but different addresses might legitimately map to the same Source 1 entity — or they might represent different entities depending on how the source defines the entity.
+
+Because the challenge explicitly allows many matches, this kind of structure is worth investigating.
+
+28. ONE BUSINESS NAME, MULTIPLE LOCATIONS
+
+Example:
+
+ABC Pharmacy - Delhi
+ABC Pharmacy - Chennai
+
+Now the name is almost identical.
+
+The address/location is the differentiator.
+
+So:
+
+high name similarity
+
+can actually be a warning sign when the name is common.
+
+29. MULTIPLE RECORDS IN ONE NOISY SOURCE
+
+Another thing to check:
+
+Source 2:
+S2-100 → ABC Technologies
+S2-200 → ABC Technologies
+S2-300 → ABC Technologies
+
+Are all three:
+
+same business?
+
+or:
+
+different branches/businesses?
+
+The ground truth will tell us how this dataset treats them.
+
+This is why we should analyze match multiplicity before designing the final decision logic.
+
+30. DUPLICATE OR NEAR-DUPLICATE SOURCE RECORDS
+
+We should check whether a source contains:
+
+exact duplicates
+
+or:
+
+almost identical duplicates
+
+For example:
+
+S2-101 ABC Technologies ...
+S2-102 ABC Technologies ...
+
+If both map to the same S1, that is useful information.
+
+If they map differently, then we have a disambiguation problem.
+
+31. SOURCE RECORD QUALITY MAY DIFFER
+
+One source may be:
+
+clean name + poor address
+
+while another might be:
+
+poor name + clean address
+
+Again, the PDF says the sources are independent and noisy.
+
+So we should calculate quality statistics per source, such as:
+
+missingness
+average name length
+average address length
+script distribution
+abbreviation frequency
+duplicate frequency
+32. EMPTY / MISSING FIELDS
+
+The official document explicitly discusses missing address components, but we should also inspect the actual data for:
+
+empty name
+empty address
+empty country
+partial strings
+weird placeholders
+
+Examples to look for:
+
+""
+NULL
+N/A
+Unknown
+-
+.
+
+These are not confirmed by the PDF, but they are exactly the sort of dataset pathology we should audit.
+
+33. Very short names
+
+Another dangerous case:
+
+ABC
+A1
+HP
+MK
+XYZ
+
+Fuzzy similarity is unreliable when strings are very short.
+
+For example:
+
+ABC
+
+has very little discriminative information.
+
+So we should investigate:
+
+name length
+token count
+rare/common status
+34. Generic business words
+
+Names containing:
+
+Services
+Trading
+Enterprises
+Company
+Solutions
+International
+India
+Group
+Industries
+Store
+Foods
+
+may have low discriminative value.
+
+For example:
+
+ABC Trading
+XYZ Trading
+PQR Trading
+
+A model that gives every token equal weight can get confused.
+
+This suggests using token rarity / IDF-like weighting.
+
+35. Token prominence / important words
+
+Sometimes:
+
+Shree Krishna Technologies Pvt Ltd
+
+and:
+
+Shree Krishna Technology
+
+are close because the important tokens are shared.
+
+But:
+
+Shree Services
+
+may be much less informative.
+
+So we should distinguish:
+
+rare business-specific tokens
+
+from:
+
+generic corporate tokens
+36. Address contains irrelevant/shared information
+
+For example:
+
+Near SBI ATM, MG Road, Bengaluru
+
+The phrase:
+
+SBI ATM
+
+could appear for many businesses.
+
+So not all address tokens are equally useful.
+
+Again:
+
+rare address token
+
+may be stronger than:
+
+common landmark token
+37. Postal-code / PIN complexity
+
+Postal codes can be:
+
+present
+missing
+formatted differently
+incorrectly spaced
+
+For example:
+
+560001
+560 001
+
+We should inspect numeric patterns separately.
+
+A correct postal code can be powerful evidence, but an incorrect one should not automatically reject the pair.
+
+38. Address component hierarchy
+
+An address is not really just one string.
+
+It may contain:
+
+building
+unit
+street
+locality
+city
+state
+postal code
+country
+landmark
+
+Different records can preserve different subsets.
+
+So the underlying problem may actually be:
+
+Compare partially observed sets of address components.
+
+That's more powerful than treating the entire address as plain text.
+
+39. Record-level contradictions
+
+Another thing we should look for:
+
+Name says:
+ABC Technologies
+
+Address says:
+XYZ Industrial Estate
+
+while another source says:
+
+ABC Technologies
+XYZ Industrial Estate
+
+Strong agreement.
+
+But if one record has:
+
+ABC Technologies
+completely different location
+
+we need to know whether that means:
+
+different business
+
+or:
+
+branch/relocation/noisy address
+
+The training labels can reveal how the dataset treats such cases.
+
+40. Alias / acronym complexity
+
+This is another thing to inspect.
+
+For example:
+
+International Business Machines
+IBM
+
+or:
+
+Hindustan Petroleum
+HP
+
+This is related to name variation but is harder than ordinary abbreviation because the strings can be almost completely unrelated.
+
+Not explicitly guaranteed by the PDF, so this should be checked, not assumed.
+
+41. Parent company vs branch / subsidiary ambiguity
+
+Potentially:
+
+ABC Holdings
+ABC Technologies
+ABC Technologies India
+
+could be related but not necessarily the same entity.
+
+This becomes a semantic ambiguity rather than a spelling problem.
+
+Again, not confirmed by the provided guidelines; it is something we should look for in the actual records and labels.
+
+42. Business relocation / stale address possibility
+
+Potentially:
+
+Source 1:
+ABC Technologies
+12 MG Road
+
+Source 2:
+ABC Technologies
+50 Park Street
+
+This could be:
+
+different business
+
+or:
+
+same business, different/stale address
+
+The dataset's ground truth determines how such cases are labeled.
+
+So we should specifically inspect high name similarity + very low address similarity pairs.
+
+43. Entity multiplicity is itself a dataset property
+
+This one is confirmed:
+
+S1 → 0 records
+S1 → 1 record
+S1 → many records
+
+But we should calculate the actual distribution:
+
+0 matches: ?
+1 match: ?
+2 matches: ?
+3 matches: ?
+10+ matches: ?
+
+This could strongly affect our final prediction strategy.
+
+44. Singleton vs ambiguous entity
+
+These are very different:
+
+Singleton
+No meaningful candidate exists.
+Ambiguous entity
+Several plausible candidates exist.
+
+For example:
+
+S1
+ABC Services
+MG Road
+
+and:
+
+S2-A ABC Services / MG Road
+S2-B ABC Services / MG Road
+S2-C ABC Services / Park Road
+
+The model needs to distinguish:
+
+no match
+
+from:
+
+many possible matches
+45. Candidate-blocking complexity
+
+There can also be cases where different signals suggest different candidates.
+
+For example:
+
+Name block → A
+Address block → B
+Character-nearest → C
+
+The true match may only appear through one of these routes.
+
+That is why the official guidance emphasizes blocking and says it determines the upper bound of recall.
+
+So one hidden complexity is:
+
+A true match may be similar in a way that is not captured by our first blocking rule.
+
+46. Cross-source asymmetry
+
+Possible situation:
+
+S1 → S2
+
+looks easy,
+
+while:
+
+S1 → S3
+
+is extremely noisy.
+
+Or vice versa.
+
+The challenge gives two different noisy sources, so we should measure them separately.
+
+47. Different corruption combinations
+
+The hardest cases may combine several problems simultaneously.
+
+For example:
+
+S1:
+Sri Lakshmi Electronics Pvt Ltd
+12 MG Road, Bengaluru
+
+S2:
+ಶ್ರೀ ಲಕ್ಷ್ಮೀ Electronics
+12 M G Rd, Bangalore
+
+Now we have:
+
+language/script variation
++
+transliteration
++
+legal suffix removal
++
+punctuation variation
++
+address abbreviation
++
+city naming variation
+
+This is much harder than a single noise type.
+
+These compound-corruption cases are likely much more important than isolated typos.
+
+48. The really difficult case: BOTH name and address are noisy
+
+Example:
+
+S1:
+Shree Krishna Electronics Pvt Ltd
+12 MG Road, Bengaluru
+
+S2:
+श्री कृष्णा इलेक्ट्रॉनिक्स
+12 M G Rd, Bangalore
+
+Here:
+
+NAME
+Latin ↔ Devanagari/transliteration
+
+ADDRESS
+abbreviation + city variation
+
+A plain character similarity model could struggle badly.
+
+This is the type of case where a multi-view representation becomes valuable.
+
+49. The hardest possible case
+
+Conceptually:
+
+S1:
+ABC Electronics Pvt Ltd
+12 MG Road, Bengaluru
+
+S2:
+एबीसी इलेक्ट्रॉनिक्स
+Near SBI ATM, MG Rd, Bangalore
+
+S3:
+ABC Electronics
+12 M G Road
+
+Now the system faces:
+
+language/script
+transliteration
+legal suffix
+abbreviation
+landmark
+missing components
+word differences
+partial address
+
+This is why I would not design the final model around one similarity score.
+
+50. Think of the dataset as 5 major layers
+
+This is probably the cleanest mental model for our project:
+
+                    ENTITY RESOLUTION
+                           │
+       ┌───────────────────┼───────────────────┐
+       ↓                   ↓                   ↓
+     NAME               ADDRESS             CONTEXT
+       │                   │                   │
+   language             language            country
+   script               script              source
+   transliteration      transliteration      region
+   typo                 abbreviation
+   abbreviation         missing parts
+   suffix               landmark
+   punctuation          numbering
+   word order            reorder
+   tokenization          postal code
+   aliases               etc.
+
+Then:
+
+                     IDENTITY STRUCTURE
+                           │
+                 ┌─────────┼─────────┐
+                 ↓         ↓         ↓
+               many       one       zero
+              matches   match      match
+
+Then:
+
+                    AMBIGUITY
+                       │
+             ┌─────────┼─────────┐
+             ↓         ↓         ↓
+        same name   same addr  both similar
+        different   different   but multiple
+        address     business    candidates
+
+And finally:
+
+                 COMPETITION RULES
+                       │
+          ┌────────────┼─────────────┐
+          ↓            ↓             ↓
+        F0.5        Output         No external
+        macro       constraints       lookup
+51. The complete checklist I would use on the real dataset
+
+When we get the actual TSVs, I want to check all of these:
+
+LANGUAGE / TEXT
+□ English/Latin
+□ Bengali
+□ Hindi
+□ Telugu
+□ Tamil
+□ Kannada
+□ Malayalam
+□ Gujarati
+□ Arabic
+□ French
+□ other scripts
+□ mixed scripts
+□ transliteration
+□ Unicode variants
+□ accents
+□ special characters
+□ token split/join
+NAME
+□ abbreviations
+□ legal suffixes
+□ punctuation
+□ & / and
+□ typos
+□ transpositions
+□ word-order changes
+□ trade/DBA names
+□ acronyms
+□ aliases
+□ duplicate names
+□ very short names
+□ generic tokens
+□ rare tokens
+□ parent/branch naming
+ADDRESS
+□ Rd/Road
+□ St/Street
+□ other abbreviations
+□ transliteration
+□ missing PIN
+□ missing state
+□ missing city
+□ missing house number
+□ partial address
+□ landmark
+□ numbering variations
+□ reordered components
+□ numeric formatting
+□ postal-code variation
+□ shared addresses
+SOURCE/COUNTRY
+□ Source-specific noise
+□ country labels
+□ unseen country
+□ country/name mismatch
+□ region-specific conventions
+□ source quality differences
+□ missing values
+ENTITY STRUCTURE
+□ singleton
+□ one-to-one
+□ one-to-many
+□ same-name businesses
+□ same-address businesses
+□ multiple branches
+□ duplicates
+□ near-duplicates
+□ ambiguous candidates
+□ relocation/stale-address patterns
+PIPELINE
+□ blocking recall
+□ candidate explosion
+□ candidate collisions
+□ hard negatives
+□ source-specific thresholds
+□ language-specific handling
+□ singleton handling
+52. And THIS is how I want us to think about it
+
+Don't say:
+
+"The dataset has name and address."
+
+Think:
+
+                    BUSINESS RECORD
+                         │
+          ┌──────────────┴──────────────┐
+          │                             │
+         NAME                         ADDRESS
+          │                             │
+    ┌─────┼─────┐                 ┌─────┼─────┐
+    │     │     │                 │     │     │
+ script typo suffix           script typo missing
+    │     │     │                 │     │     │
+ translit order alias       translit order landmark
+    │     │     │                 │     │     │
+ mixed  punct generic        numbering postal etc.
+
+Then:
+
+                   CONTEXT
+                      │
+             ┌────────┼────────┐
+             │        │        │
+           country  source    region
+
+Then:
+
+                 IDENTITY RELATION
+                       │
+             ┌─────────┼─────────┐
+             ↓         ↓         ↓
+            ZERO       ONE      MANY
+
+Then:
+
+                    AMBIGUITY
+                       │
+              ┌────────┼─────────┐
+              ↓        ↓         ↓
+           name      address    both
+           collision collision   noisy

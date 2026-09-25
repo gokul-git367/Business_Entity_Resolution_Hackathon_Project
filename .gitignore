@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local tooling
+.env
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated artifacts
+output/*
+!output/.gitkeep
+code/business_entity_resolution/artifacts/*
+!code/business_entity_resolution/artifacts/.gitkeep
+
+# Large local datasets (kept outside the GitHub repository)
+dataset/**/*.tsv
