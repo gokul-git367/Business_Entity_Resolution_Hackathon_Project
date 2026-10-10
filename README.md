@@ -122,26 +122,6 @@ To run inference using saved artifacts:
 python pipeline.py --mode test
 ```
 
-## Why This Is a Strong Resume Project
-
-This project demonstrates practical skills in:
-
-- Data cleaning and preprocessing for real-world messy datasets
-- Feature engineering for structured and text-heavy records
-- Machine learning for classification and ranking tasks
-- Optimization of business metrics beyond simple accuracy
-- Building reproducible ML pipelines for production-style workflows
-- Solving a difficult real-world matching problem using a data-driven approach
-
-It is especially relevant for roles involving:
-
-- Data science
-- Machine learning
-- Data engineering
-- MDM / data quality
-- Customer 360 / identity resolution
-- AI applied to information matching and data normalization
-
 ## Summary
 
 This repository showcases a complete, end-to-end business entity resolution pipeline built to handle noisy, fragmented, multi-source records. Instead of just satisfying a challenge specification, the project focuses on the actual business value: identifying the same company across imperfect datasets using machine learning, normalization, and careful candidate evaluation.
